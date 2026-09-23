@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { ToastProvider } from '../lib/toast.jsx';
 
 const links = [
   { to: '/', label: '📊 Tableau de bord', end: true },
@@ -12,9 +13,13 @@ const links = [
 
 export default function Layout() {
   return (
+    <ToastProvider>
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="sidebar-title">NB PRO SERVICES</div>
+        <div className="sidebar-title">
+          NB PRO SERVICES
+          <span className="sidebar-subtitle">Facturation</span>
+        </div>
         <nav>
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
@@ -27,5 +32,6 @@ export default function Layout() {
         <Outlet />
       </main>
     </div>
+    </ToastProvider>
   );
 }

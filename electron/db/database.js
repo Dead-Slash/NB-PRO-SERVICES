@@ -19,6 +19,18 @@ function getUploadsDir() {
   return dir;
 }
 
+// Ajoute les colonnes apparues après la première version (bases déjà installées)
+function migrate(db) {
+  for (const table of ['factures', 'devis']) {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+    if (!cols.includes('timbre_fiscal')) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN timbre_fiscal REAL NOT NULL DEFAULT 0`);
+    }
+  }
+  // le nom de la société est fixe
+  db.prepare("UPDATE societe SET nom = 'NB PRO SERVICES' WHERE id = 1").run();
+}
+
 function getDb() {
   if (db) return db;
   const dbPath = path.join(getDataDir(), 'nbpro.db');
@@ -41,6 +53,7 @@ function getDb() {
       '25149000000165954869'
     );
   }
+  migrate(db);
   return db;
 }
 

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api.js';
+import { useToast } from '../../lib/toast.jsx';
 import { formatMontant, formatDate, STATUTS_PAIEMENT } from '../../lib/format.js';
 
 export default function FacturesListPage() {
   const [items, setItems] = useState([]);
   const [statut, setStatut] = useState('');
   const [search, setSearch] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(null);
+  const toast = useToast();
   const navigate = useNavigate();
 
   function load() {
@@ -17,7 +18,7 @@ export default function FacturesListPage() {
     api.factures
       .list({ statut_paiement: statut || undefined, search: search || undefined })
       .then(setItems)
-      .catch((e) => setError(e.message))
+      .catch(toast.error)
       .finally(() => setLoading(false));
   }
 
@@ -27,22 +28,23 @@ export default function FacturesListPage() {
 
   async function remove(id) {
     if (!confirm('Supprimer cette facture ? Cette action est irréversible.')) return;
-    setError('');
     try {
       await api.factures.remove(id);
-      setSuccess('Facture supprimée ✓');
+      toast.success('Facture supprimée');
       load();
     } catch (err) {
-      setError(err.message);
+      toast.error(err);
     }
   }
 
   async function print(id) {
+    setPrinting(id);
     try {
       await api.factures.print(id);
-      setSuccess('Facture imprimée et ouverte.');
     } catch (err) {
-      setError(err.message);
+      toast.error(err);
+    } finally {
+      setPrinting(null);
     }
   }
 
@@ -52,9 +54,6 @@ export default function FacturesListPage() {
         <h1>💳 Factures</h1>
         <button className="btn" onClick={() => navigate('/factures/nouvelle')}>+ Nouvelle facture</button>
       </div>
-
-      {error && <p className="error">❌ {error}</p>}
-      {success && <p className="success">✓ {success}</p>}
 
       <div className="filters">
         <input
@@ -77,8 +76,8 @@ export default function FacturesListPage() {
             <th>N°</th>
             <th>Client</th>
             <th>Date</th>
-            <th>TTC</th>
-            <th>Payé</th>
+            <th className="num">Total TTC</th>
+            <th className="num">Payé</th>
             <th>Statut</th>
             <th>Actions</th>
           </tr>
@@ -86,11 +85,11 @@ export default function FacturesListPage() {
         <tbody>
           {items.map((f) => (
             <tr key={f.id}>
-              <td><strong>{f.numero}</strong></td>
+              <td><button className="link-strong" onClick={() => navigate(`/factures/${f.id}`)}>{f.numero}</button></td>
               <td>{f.client_nom}</td>
               <td>{formatDate(f.date)}</td>
-              <td>{formatMontant(f.total_ttc)}</td>
-              <td>{formatMontant(f.montant_paye)}</td>
+              <td className="num">{formatMontant(f.total_ttc)}</td>
+              <td className="num">{formatMontant(f.montant_paye)}</td>
               <td>
                 <span className="badge" style={{ background: STATUTS_PAIEMENT[f.statut_paiement].color }}>
                   {STATUTS_PAIEMENT[f.statut_paiement].label}
@@ -98,7 +97,7 @@ export default function FacturesListPage() {
               </td>
               <td className="actions">
                 <button className="btn-link" onClick={() => navigate(`/factures/${f.id}`)}>Détails</button>
-                <button className="btn-link" onClick={() => print(f.id)}>Imprimer</button>
+                <button className="btn-link" disabled={printing !== null} onClick={() => print(f.id)}>{printing === f.id ? 'PDF...' : 'Imprimer'}</button>
                 {!f.devis_id && (
                   <button className="btn-link danger" onClick={() => remove(f.id)}>Supprimer</button>
                 )}
@@ -108,7 +107,7 @@ export default function FacturesListPage() {
           {items.length === 0 && !loading && (
             <tr>
               <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-light)' }}>
-                Aucune facture {search || statut ? 'ne correspond.' : 'Commencez par créer une facture.'}
+                {search || statut ? 'Aucune facture ne correspond à la recherche.' : 'Aucune facture pour le moment. Cliquez sur « + Nouvelle facture » pour commencer.'}
               </td>
             </tr>
           )}

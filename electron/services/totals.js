@@ -1,4 +1,4 @@
-function computeTotals(lignes, avecTva) {
+function computeTotals(lignes, avecTva, timbreFiscal = 0) {
   let sousTotal = 0;
   let totalTva = 0;
   const computedLignes = (lignes || []).map((l, idx) => {
@@ -17,7 +17,15 @@ function computeTotals(lignes, avecTva) {
       ordre: idx,
     };
   });
-  return { computedLignes, sousTotal, totalTva, totalTtc: sousTotal + totalTva };
+  // arrondi au millime pour que Total HT + TVA + timbre = Total TTC sur le document imprimé
+  sousTotal = roundMillimes(sousTotal);
+  totalTva = roundMillimes(totalTva);
+  const timbre = roundMillimes(Number(timbreFiscal) || 0);
+  return { computedLignes, sousTotal, totalTva, timbre, totalTtc: roundMillimes(sousTotal + totalTva + timbre) };
+}
+
+function roundMillimes(n) {
+  return Math.round((n + Number.EPSILON) * 1000) / 1000;
 }
 
 module.exports = { computeTotals };

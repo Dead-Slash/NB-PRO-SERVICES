@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api.js';
+import { useToast } from '../../lib/toast.jsx';
 import { formatMontant, formatDate, STATUTS_DEVIS } from '../../lib/format.js';
 
 export default function DevisListPage() {
   const [items, setItems] = useState([]);
   const [statut, setStatut] = useState('');
   const [search, setSearch] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(null);
+  const toast = useToast();
   const navigate = useNavigate();
 
   function load() {
@@ -17,7 +18,7 @@ export default function DevisListPage() {
     api.devis
       .list({ statut: statut || undefined, search: search || undefined })
       .then(setItems)
-      .catch((e) => setError(e.message))
+      .catch(toast.error)
       .finally(() => setLoading(false));
   }
 
@@ -26,13 +27,14 @@ export default function DevisListPage() {
   }, [statut, search]);
 
   async function updateStatut(id, s) {
-    setError('');
+    if (s === 'validee' && !confirm('Valider ce devis ? Une facture sera créée automatiquement et le devis ne sera plus modifiable.')) return;
+    if (s === 'annulee' && !confirm('Annuler ce devis ? Il ne pourra plus être modifié ni validé.')) return;
     try {
       await api.devis.updateStatut(id, s);
-      setSuccess(s === 'validee' ? 'Devis validé ✓ Facture créée automatiquement.' : `Devis ${s === 'annulee' ? 'annulé' : s}.`);
+      toast.success(s === 'validee' ? 'Devis validé : la facture a été créée automatiquement' : 'Devis annulé');
       load();
     } catch (err) {
-      setError(err.message);
+      toast.error(err);
     }
   }
 
@@ -40,19 +42,21 @@ export default function DevisListPage() {
     if (!confirm('Supprimer ce devis ? Cette action est irréversible.')) return;
     try {
       await api.devis.remove(id);
-      setSuccess('Devis supprimé ✓');
+      toast.success('Devis supprimé');
       load();
     } catch (err) {
-      setError(err.message);
+      toast.error(err);
     }
   }
 
   async function print(id) {
+    setPrinting(id);
     try {
       await api.devis.print(id);
-      setSuccess('Devis imprimé et ouvert.');
     } catch (err) {
-      setError(err.message);
+      toast.error(err);
+    } finally {
+      setPrinting(null);
     }
   }
 
@@ -62,9 +66,6 @@ export default function DevisListPage() {
         <h1>📋 Devis</h1>
         <button className="btn" onClick={() => navigate('/devis/nouveau')}>+ Nouveau devis</button>
       </div>
-
-      {error && <p className="error">❌ {error}</p>}
-      {success && <p className="success">✓ {success}</p>}
 
       <div className="filters">
         <input
@@ -87,7 +88,7 @@ export default function DevisListPage() {
             <th>N°</th>
             <th>Client</th>
             <th>Date</th>
-            <th>TTC</th>
+            <th className="num">Total TTC</th>
             <th>Statut</th>
             <th>Actions</th>
           </tr>
@@ -95,10 +96,10 @@ export default function DevisListPage() {
         <tbody>
           {items.map((d) => (
             <tr key={d.id}>
-              <td><strong>{d.numero}</strong></td>
+              <td><button className="link-strong" onClick={() => navigate(`/devis/${d.id}`)}>{d.numero}</button></td>
               <td>{d.client_nom}</td>
               <td>{formatDate(d.date)}</td>
-              <td>{formatMontant(d.total_ttc)}</td>
+              <td className="num">{formatMontant(d.total_ttc)}</td>
               <td>
                 <span className="badge" style={{ background: STATUTS_DEVIS[d.statut].color }}>
                   {STATUTS_DEVIS[d.statut].label}
@@ -115,9 +116,10 @@ export default function DevisListPage() {
                 {d.statut !== 'attente' && (
                   <>
                     <button className="btn-link" onClick={() => navigate(`/devis/${d.id}`)}>Voir</button>
+                    {d.facture_id && <button className="btn-link" onClick={() => navigate(`/factures/${d.facture_id}`)}>Voir la facture</button>}
                   </>
                 )}
-                <button className="btn-link" onClick={() => print(d.id)}>Imprimer</button>
+                <button className="btn-link" disabled={printing !== null} onClick={() => print(d.id)}>{printing === d.id ? 'PDF...' : 'Imprimer'}</button>
                 {d.statut !== 'validee' && (
                   <button className="btn-link danger" onClick={() => remove(d.id)}>Supprimer</button>
                 )}
@@ -127,7 +129,7 @@ export default function DevisListPage() {
           {items.length === 0 && !loading && (
             <tr>
               <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-light)' }}>
-                Aucun devis {search || statut ? 'ne correspond.' : 'Commencez par créer un devis.'}
+                {search || statut ? 'Aucun devis ne correspond à la recherche.' : 'Aucun devis pour le moment. Cliquez sur « + Nouveau devis » pour commencer.'}
               </td>
             </tr>
           )}

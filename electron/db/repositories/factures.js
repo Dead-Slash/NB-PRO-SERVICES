@@ -1,5 +1,6 @@
 const { nextNumero } = require('../../services/numbering');
 const { computeTotals } = require('../../services/totals');
+const { getFacturation } = require('./settings');
 
 function withDetails(db, f) {
   if (!f) return f;
@@ -41,15 +42,17 @@ function insertLignes(db, factureId, computedLignes) {
 
 function create(db, data) {
   const avecTva = data.avec_tva ? 1 : 0;
-  const { computedLignes, sousTotal, totalTva, totalTtc } = computeTotals(data.lignes, avecTva);
+  // une facture issue d'un devis reprend le timbre du devis, sinon celui des paramètres
+  const timbreFiscal = data.timbre_fiscal ?? getFacturation(db).timbre_fiscal;
+  const { computedLignes, sousTotal, totalTva, timbre, totalTtc } = computeTotals(data.lignes, avecTva, timbreFiscal);
   const numero = nextNumero(db, 'FACT');
   const tx = db.transaction(() => {
     const info = db
       .prepare(`
-        INSERT INTO factures (numero, date, client_id, devis_id, avec_tva, sous_total, total_tva, total_ttc, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO factures (numero, date, client_id, devis_id, avec_tva, sous_total, total_tva, timbre_fiscal, total_ttc, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
-      .run(numero, data.date, data.client_id, data.devis_id || null, avecTva, sousTotal, totalTva, totalTtc, data.notes || null);
+      .run(numero, data.date, data.client_id, data.devis_id || null, avecTva, sousTotal, totalTva, timbre, totalTtc, data.notes || null);
     insertLignes(db, info.lastInsertRowid, computedLignes);
     return info.lastInsertRowid;
   });
@@ -62,14 +65,15 @@ function update(db, id, data) {
   if (existing.devis_id) throw new Error('Une facture générée depuis un devis ne peut pas être modifiée');
 
   const avecTva = data.avec_tva ? 1 : 0;
-  const { computedLignes, sousTotal, totalTva, totalTtc } = computeTotals(data.lignes, avecTva);
+  const { computedLignes, sousTotal, totalTva, timbre, totalTtc } = computeTotals(data.lignes, avecTva, getFacturation(db).timbre_fiscal);
   const tx = db.transaction(() => {
     db.prepare(`
-      UPDATE factures SET date=?, client_id=?, avec_tva=?, sous_total=?, total_tva=?, total_ttc=?, notes=?, updated_at=datetime('now')
+      UPDATE factures SET date=?, client_id=?, avec_tva=?, sous_total=?, total_tva=?, timbre_fiscal=?, total_ttc=?, notes=?, updated_at=datetime('now')
       WHERE id=?
-    `).run(data.date, data.client_id, avecTva, sousTotal, totalTva, totalTtc, data.notes || null, id);
+    `).run(data.date, data.client_id, avecTva, sousTotal, totalTva, timbre, totalTtc, data.notes || null, id);
     db.prepare('DELETE FROM facture_lignes WHERE facture_id = ?').run(id);
     insertLignes(db, id, computedLignes);
+    refreshStatutPaiement(db, id);
   });
   tx();
   return get(db, id);

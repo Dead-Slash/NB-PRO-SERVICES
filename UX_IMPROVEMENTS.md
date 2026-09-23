@@ -12,7 +12,7 @@
 Ces informations apparaissent automatiquement dans:
 - Les en-têtes des PDF (devis et factures)
 - Les pieds de page des PDF
-- La page Paramètres pour modification
+- La page Paramètres (le nom de la société est fixe : l'application est dédiée à NB PRO SERVICES)
 
 ### 2. **Design Moderne & Cohérent**
 - Palette de couleurs professionnelle
@@ -119,7 +119,8 @@ Génère un installateur Windows .exe dans `release/`
 - Champs: Nom, Matricule Fiscal, Téléphone, Email, Adresse, Notes
 
 ### ⚙️ Paramètres
-- Modifier les infos de l'entreprise (nom, logo, coordonnées)
+- Modifier les coordonnées de l'entreprise (logo, adresse, téléphone, RIB...) ; le nom est fixe
+- Définir le taux de TVA par défaut et le montant du timbre fiscal
 - Indiquer la clé API Gemini pour le scanning
 - Les infos apparaissent dans tous les PDF
 
@@ -173,4 +174,4 @@ npm run dev
 → Supprimez `data/nbpro.db` et relancez l'app (elle sera recréée vierge)
 
 ## Support
-Pour modifier les infos de la société, allez à **⚙️ Paramètres** et mettez à jour les champs. Les modifications apparaîtront immédiatement dans les PDF générés.
+Pour modifier les coordonnées de la société, le taux de TVA par défaut ou le timbre fiscal, allez à **⚙️ Paramètres**. Les modifications apparaîtront immédiatement dans les PDF générés.
