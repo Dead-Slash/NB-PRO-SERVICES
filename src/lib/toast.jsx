@@ -5,6 +5,13 @@ const ToastContext = createContext(null);
 
 let nextId = 1;
 
+// Les erreurs venant d'Electron arrivent sous la forme
+// "Error invoking remote method 'x': Error: message" : on ne garde que le message utile.
+export function messageOf(err) {
+  const raw = err instanceof Error ? err.message : String(err);
+  return raw.replace(/^Error invoking remote method '[^']*': (\w*Error: )?/, '');
+}
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
@@ -18,7 +25,8 @@ export function ToastProvider({ children }) {
 
   const api = useMemo(() => ({
     success: (m) => push('success', m),
-    error: (m) => push('error', m instanceof Error ? m.message : String(m)),
+    error: (m) => push('error', messageOf(m)),
+    messageOf,
   }), [push]);
 
   return (

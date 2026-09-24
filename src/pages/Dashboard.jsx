@@ -26,41 +26,41 @@ export default function Dashboard() {
       </div>
 
       <div className="cards">
-        <div className="card card-green">
+        <button className="card card-green card-link" onClick={() => navigate('/factures')} title="Voir les factures">
           <div className="card-label">💰 Argent encaissé</div>
           <div className="card-value">{formatMontant(data.revenuEncaisse)}</div>
-        </div>
-        <div className="card card-red">
+        </button>
+        <button className="card card-red card-link" onClick={() => navigate('/achats')} title="Voir les factures d'achat">
           <div className="card-label">📉 Argent dépensé</div>
           <div className="card-value">{formatMontant(data.depenses)}</div>
-        </div>
+        </button>
         <div className="card card-blue">
           <div className="card-label">📈 Bénéfice</div>
           <div className="card-value">{formatMontant(data.benefice)}</div>
         </div>
-        <div className="card">
+        <button className="card card-link" onClick={() => navigate('/factures?statut=non_soldee')} title="Voir les factures à recouvrer">
           <div className="card-label">⚠️ À recouvrer</div>
           <div className="card-value">{formatMontant(data.totalImpaye)}</div>
-        </div>
+        </button>
       </div>
 
       <div className="cards secondary">
-        <div className="stat">
+        <button className="stat stat-link" onClick={() => navigate('/devis?statut=attente')}>
           <span>📋</span>
           <div><strong>{data.nbDevisAttente}</strong> devis en attente</div>
-        </div>
-        <div className="stat">
+        </button>
+        <button className="stat stat-link" onClick={() => navigate('/factures?statut=non_soldee')}>
           <span>💳</span>
           <div><strong>{data.nbFacturesImpayees}</strong> factures impayées</div>
-        </div>
-        <div className="stat">
+        </button>
+        <button className="stat stat-link" onClick={() => navigate('/clients')}>
           <span>👥</span>
           <div><strong>{data.nbClients}</strong> clients</div>
-        </div>
-        <div className="stat">
+        </button>
+        <button className="stat stat-link" onClick={() => navigate('/fournisseurs')}>
           <span>🏢</span>
           <div><strong>{data.nbFournisseurs}</strong> fournisseurs</div>
-        </div>
+        </button>
       </div>
 
       <div className="grid-2">
@@ -72,7 +72,7 @@ export default function Dashboard() {
                 <th>N°</th>
                 <th>Client</th>
                 <th>Date</th>
-                <th>TTC</th>
+                <th className="num">TTC</th>
                 <th>Statut</th>
                 <th></th>
               </tr>
@@ -80,10 +80,10 @@ export default function Dashboard() {
             <tbody>
               {data.dernieresFactures.map((f) => (
                 <tr key={f.id}>
-                  <td><strong>{f.numero}</strong></td>
+                  <td><button className="link-strong" onClick={() => navigate(`/factures/${f.id}`)}>{f.numero}</button></td>
                   <td>{f.client_nom}</td>
                   <td>{formatDate(f.date)}</td>
-                  <td>{formatMontant(f.total_ttc)}</td>
+                  <td className="num">{formatMontant(f.total_ttc)}</td>
                   <td>
                     <span className="badge" style={{ background: STATUTS_PAIEMENT[f.statut_paiement].color }}>
                       {STATUTS_PAIEMENT[f.statut_paiement].label}
@@ -110,7 +110,7 @@ export default function Dashboard() {
               <tr>
                 <th>Fournisseur</th>
                 <th>Date</th>
-                <th>Montant TTC</th>
+                <th className="num">Montant TTC</th>
                 <th></th>
               </tr>
             </thead>
@@ -119,7 +119,7 @@ export default function Dashboard() {
                 <tr key={a.id}>
                   <td>{a.fournisseur_nom || a.fournisseur_nom_libre || '—'}</td>
                   <td>{formatDate(a.date)}</td>
-                  <td>{formatMontant(a.montant_ttc)}</td>
+                  <td className="num">{formatMontant(a.montant_ttc)}</td>
                   <td>
                     <button className="btn-link" onClick={() => navigate('/achats')}>Voir</button>
                   </td>

@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
+import { useDebounce } from '../../lib/hooks.js';
 import { formatMontant, formatDate, STATUTS_PAIEMENT } from '../../lib/format.js';
 
 export default function FacturesListPage() {
   const [items, setItems] = useState([]);
-  const [statut, setStatut] = useState('');
+  const [searchParams] = useSearchParams();
+  // le filtre de statut peut être pré-rempli depuis le tableau de bord (?statut=...)
+  const [statut, setStatut] = useState(searchParams.get('statut') || '');
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
+  const debouncedSearch = useDebounce(search);
+  const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -16,7 +20,7 @@ export default function FacturesListPage() {
   function load() {
     setLoading(true);
     api.factures
-      .list({ statut_paiement: statut || undefined, search: search || undefined })
+      .list({ statut_paiement: statut || undefined, search: debouncedSearch.trim() || undefined })
       .then(setItems)
       .catch(toast.error)
       .finally(() => setLoading(false));
@@ -24,7 +28,7 @@ export default function FacturesListPage() {
 
   useEffect(() => {
     load();
-  }, [statut, search]);
+  }, [statut, debouncedSearch]);
 
   async function remove(id) {
     if (!confirm('Supprimer cette facture ? Cette action est irréversible.')) return;
@@ -57,6 +61,7 @@ export default function FacturesListPage() {
 
       <div className="filters">
         <input
+          type="search"
           className="input"
           placeholder="Rechercher par numéro ou client..."
           value={search}
@@ -64,6 +69,7 @@ export default function FacturesListPage() {
         />
         <select className="input" value={statut} onChange={(e) => setStatut(e.target.value)}>
           <option value="">Tous les statuts</option>
+          <option value="non_soldee">Non soldées (à recouvrer)</option>
           <option value="impayee">Impayée</option>
           <option value="partiellement_payee">Partiellement payée</option>
           <option value="payee">Payée</option>
@@ -111,7 +117,7 @@ export default function FacturesListPage() {
               </td>
             </tr>
           )}
-          {loading && (
+          {loading && items.length === 0 && (
             <tr>
               <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-light)' }}>Chargement...</td>
             </tr>

@@ -41,7 +41,12 @@ function update(db, id, data) {
 }
 
 function remove(db, id) {
-  db.prepare('DELETE FROM clients WHERE id = ?').run(id);
+  try {
+    db.prepare('DELETE FROM clients WHERE id = ?').run(id);
+  } catch (err) {
+    if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') throw new Error("Ce client est utilisé par des devis ou des factures : il ne peut pas être supprimé.");
+    throw err;
+  }
   return { success: true };
 }
 

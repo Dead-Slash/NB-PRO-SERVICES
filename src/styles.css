@@ -386,3 +386,28 @@ label {
 .toast-error { border-left-color: var(--danger); }
 .toast-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; background: var(--success); }
 .toast-error .toast-icon { background: var(--danger); }
+
+/* Cartes et indicateurs cliquables du tableau de bord */
+.card-link { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.card-link:focus-visible, .stat-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.stat-link { font: inherit; background: none; border: none; cursor: pointer; padding: 6px 10px; border-radius: 8px; text-align: left; transition: background-color .15s; }
+.stat-link:hover { background: #eef2ff; color: var(--primary); }
+
+/* Listes */
+.empty-cell { text-align: center !important; color: var(--text-light); padding: 28px 14px !important; }
+.cell-ellipsis { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table tfoot td { background: #f9fafb; font-weight: 700; border-top: 2px solid var(--border); }
+.filters .inline-label { flex-direction: row; align-items: center; gap: 8px; color: var(--text-light); font-weight: 400; }
+.filters .inline-label .input { width: auto; }
+
+/* Modales */
+.modal-hint { margin-right: auto; align-self: center; }
+.modal .form-row { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.modal .form-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.input.num { text-align: right; }
+
+/* Pièce jointe + scan Gemini (achats) */
+.scan-box { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; }
+.scan-file { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.scan-file .btn-secondary { margin: 0; }
+.scan-file .file-badge { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }

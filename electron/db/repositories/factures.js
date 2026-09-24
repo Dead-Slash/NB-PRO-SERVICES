@@ -13,7 +13,10 @@ function withDetails(db, f) {
 function list(db, filters = {}) {
   let sql = `SELECT factures.*, clients.nom AS client_nom FROM factures JOIN clients ON clients.id = factures.client_id WHERE 1=1`;
   const params = [];
-  if (filters.statut_paiement) {
+  if (filters.statut_paiement === 'non_soldee') {
+    // impayées + partiellement payées
+    sql += " AND factures.statut_paiement != 'payee'";
+  } else if (filters.statut_paiement) {
     sql += ' AND factures.statut_paiement = ?';
     params.push(filters.statut_paiement);
   }

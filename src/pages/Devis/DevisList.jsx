@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api.js';
 import { useToast } from '../../lib/toast.jsx';
+import { useDebounce } from '../../lib/hooks.js';
 import { formatMontant, formatDate, STATUTS_DEVIS } from '../../lib/format.js';
 
 export default function DevisListPage() {
   const [items, setItems] = useState([]);
-  const [statut, setStatut] = useState('');
+  const [searchParams] = useSearchParams();
+  // le filtre de statut peut être pré-rempli depuis le tableau de bord (?statut=...)
+  const [statut, setStatut] = useState(searchParams.get('statut') || '');
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
+  const debouncedSearch = useDebounce(search);
+  const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -16,7 +20,7 @@ export default function DevisListPage() {
   function load() {
     setLoading(true);
     api.devis
-      .list({ statut: statut || undefined, search: search || undefined })
+      .list({ statut: statut || undefined, search: debouncedSearch.trim() || undefined })
       .then(setItems)
       .catch(toast.error)
       .finally(() => setLoading(false));
@@ -24,7 +28,7 @@ export default function DevisListPage() {
 
   useEffect(() => {
     load();
-  }, [statut, search]);
+  }, [statut, debouncedSearch]);
 
   async function updateStatut(id, s) {
     if (s === 'validee' && !confirm('Valider ce devis ? Une facture sera créée automatiquement et le devis ne sera plus modifiable.')) return;
@@ -69,6 +73,7 @@ export default function DevisListPage() {
 
       <div className="filters">
         <input
+          type="search"
           className="input"
           placeholder="Rechercher par numéro ou client..."
           value={search}
@@ -133,7 +138,7 @@ export default function DevisListPage() {
               </td>
             </tr>
           )}
-          {loading && (
+          {loading && items.length === 0 && (
             <tr>
               <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-light)' }}>Chargement...</td>
             </tr>

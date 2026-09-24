@@ -41,7 +41,12 @@ function update(db, id, data) {
 }
 
 function remove(db, id) {
-  db.prepare('DELETE FROM fournisseurs WHERE id = ?').run(id);
+  try {
+    db.prepare('DELETE FROM fournisseurs WHERE id = ?').run(id);
+  } catch (err) {
+    if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') throw new Error("Ce fournisseur est lié à des factures d'achat : il ne peut pas être supprimé.");
+    throw err;
+  }
   return { success: true };
 }
 

@@ -64,6 +64,22 @@ Avant toute suppression, l'utilisateur est invité à confirmer:
 - Tables des dernières transactions
 - Liens rapides vers les détails
 
+### 9. **Fenêtres et listes plus confortables**
+- Modales : `Échap` ou clic à l'extérieur pour fermer, avec confirmation s'il reste des modifications non enregistrées
+- Les erreurs de saisie s'affichent dans la modale (et non plus derrière elle)
+- Bouton « Enregistrement... » désactivé pendant la sauvegarde (plus de double clic)
+- Clients, fournisseurs et achats utilisent les notifications éphémères
+- Recherche sans requête à chaque frappe ; la liste ne clignote plus pendant le rechargement
+- Suppression d'un client/fournisseur encore utilisé : message clair au lieu d'une erreur SQLite
+- Tableau de bord : cartes et compteurs cliquables, qui ouvrent la liste déjà filtrée
+- Factures : filtre « Non soldées (à recouvrer) »
+
+### 10. **Achats**
+- Recherche par fournisseur / n° de facture, filtre par période, total TTC en pied de tableau
+- TTC calculé automatiquement à partir du HT et de la TVA (modifiable)
+- Après le scan Gemini, le fournisseur est sélectionné automatiquement s'il existe déjà
+- Nom du fichier joint affiché
+
 ## Comment Utiliser
 
 ### Démarrer l'App
